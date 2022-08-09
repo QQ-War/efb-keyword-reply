@@ -25,7 +25,7 @@ class KeywordReplyMiddleware(Middleware):
     middleware_name: str = "Keyword Reply Middleware"
     __version__: str = '0.1.0'
 
-    keywords = ['不支持的消息类型, 请在微信端查看']
+    keywords = ['语音/视频聊天\n  - - - - - - - - - - - - - - - \n不支持的消息类型, 请在微信端查看']
     
     #待处理，通过正则匹配
     #rekeywords = [ '*(unsupported)\n语音/视频聊天*']
