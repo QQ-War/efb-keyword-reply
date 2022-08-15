@@ -66,7 +66,16 @@ class KeywordReplyMiddleware(Middleware):
             #deliver_to=coordinator.slaves,
             deliver_to=coordinator.slaves[message.chat.module_id]
         )
+        msg_to_master = Message(
+            uid="{uni_id}".format(uni_id=str(int(time.time()))),
+            type=MsgType.Text,
+            chat=message.chat,
+            text='终端不支持语音通话，请发送信息或拨打****(本条是自动回复）',
+            author=message.author,
+            deliver_to=coordinator.master
+        )
         #msg.chat.uid=message.chat.uid
         #coordinator.slaves['honus.CuteCatiHttp'].send_message(msg)
         coordinator.send_message(msg)
+        coordinator.send_message(msg_to_master)
     
