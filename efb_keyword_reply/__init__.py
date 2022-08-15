@@ -3,6 +3,7 @@ import shelve
 import atexit
 import uuid
 import time
+import threading
 #import re
 from collections.abc import Mapping
 from threading import Timer
@@ -50,7 +51,8 @@ class KeywordReplyMiddleware(Middleware):
     
         if message.type == MsgType.Unsupported and \
             self.match_list(message.text):    
-            self.keyword_reply(message)
+            #self.keyword_reply(message)
+            threading.Thread(target=self.keyword_reply, args=(message,), name=f"keyword_reply thread {message.uid}").start()
             
         return message
 
@@ -64,7 +66,7 @@ class KeywordReplyMiddleware(Middleware):
             #deliver_to=coordinator.slaves,
             deliver_to=coordinator.slaves[message.chat.module_id]
         )
-        msg.chat.uid=message.chat.uid
+        #msg.chat.uid=message.chat.uid
         #coordinator.slaves['honus.CuteCatiHttp'].send_message(msg)
         coordinator.send_message(msg)
     
