@@ -26,7 +26,7 @@ class KeywordReplyMiddleware(Middleware):
     middleware_name: str = "Keyword Reply Middleware"
     __version__: str = '0.1.0'
 
-    keywords = ['语音/视频聊天\n  - - - - - - - - - - - - - - - \n不支持的消息类型, 请在微信端查看']
+    keywords = {'语音/视频聊天\n  - - - - - - - - - - - - - - - \n不支持的消息类型, 请在微信端查看':'终端不支持语音通话，请发送信息或拨打****(本条是自动回复）', '在吗？':'信息已收到，请留言（本条是自动回复）', '在？':'信息已收到，请留言（本条是自动回复）'}
     
     #待处理，通过正则匹配
     #rekeywords = [ '*(unsupported)\n语音/视频聊天*']
@@ -34,34 +34,35 @@ class KeywordReplyMiddleware(Middleware):
     def __init__(self, instance_id: Optional[InstanceID] = None):
         super().__init__(instance_id)
         
-    def match_list(self, text) -> bool:
+    def match_list(self, text) -> str:
         """
         关键字的匹配，主要匹配keywords的列表
         """
-        for i in self.keywords:
+        for i in self.keywords.keys():
             #print(text.find(i))
-            if text.find(i) != -1:
-                return True
+            if text.find(self.keywords[i]) != -1:
+                return i
         return False
 
     def process_message(self, message: Message) -> Optional[Message]:
         #print("message.type&&&&&"+str(message.type))
         #print(message.type)
         #print(self.match_list(message.text))
+
+        keyword = self.match_list(message.text)
     
-        if message.type == MsgType.Unsupported and \
-            self.match_list(message.text):    
+        if message.type in [MsgType.Unsupported, MsgType.Text] and keyword:
             #self.keyword_reply(message)
-            threading.Thread(target=self.keyword_reply, args=(message,), name=f"keyword_reply thread {message.uid}").start()
+            threading.Thread(target=self.keyword_reply, args=(message,keyword), name=f"keyword_reply thread {message.uid}").start()
             
         return message
 
-    def keyword_reply(self, message: Message):
+    def keyword_reply(self, message: Message, keyword: Str):
         msg = Message(
             uid="{uni_id}".format(uni_id=str(int(time.time()))),
             type=MsgType.Text,
             chat=message.chat,
-            text='终端不支持语音通话，请发送信息或拨打****(本条是自动回复）',
+            text=keywords[keyword],
             author=message.author,
             #deliver_to=coordinator.slaves,
             deliver_to=coordinator.slaves[message.chat.module_id]
@@ -70,7 +71,7 @@ class KeywordReplyMiddleware(Middleware):
             uid="{uni_id}".format(uni_id=str(int(time.time()))),
             type=MsgType.Text,
             chat=message.chat,
-            text='终端不支持语音通话，请发送信息或拨打****(本条是自动回复）',
+            text=keywords[keyword],
             author=message.author,
             deliver_to=coordinator.master
         )
