@@ -28,10 +28,10 @@ class KeywordReplyMiddleware(Middleware):
         config_path = efb_utils.get_config_path(self.middleware_id)
         self.config = self.load_config(config_path)
         self.keywords=self.config['keywords'] if 'keywords' in self.config.keys() else {}
-        self.keywords['语音/视频聊天\n  - - - - - - - - - - - - - - - \n不支持的消息类型, 请在微信端查看']='终端不支持语音通话，请发送信息或拨打*****(本条是自动回复）'
+        #self.keywords['语音/视频聊天\n  - - - - - - - - - - - - - - - \n不支持的消息类型, 请在微信端查看']='终端不支持语音通话，请发送信息或拨打*****(本条是自动回复）'
 
-
-    def load_config(self, path : str) -> Dict[str, Any]:
+    @staticmethod
+    def load_config(path : str) -> Dict[str, Any]:
         if not path.exists():
             return
         with path.open() as f:
@@ -41,25 +41,23 @@ class KeywordReplyMiddleware(Middleware):
             config: Dict[str, Any] = d
         return config
 
+    @staticmethod
+    def sent_by_master(message: Message) -> bool:
+        return message.deliver_to != coordinator.master
+
     def match_list(self, text) -> str:
         """
         关键字的匹配，主要匹配keywords的列表
         """
         for i in self.keywords.keys():
-            #print(text.find(i))
             if text.find(i) != -1:
                 return i
         return "&&"
 
     def process_message(self, message: Message) -> Optional[Message]:
-        #print("message.type&&&&&"+str(message.type))
-        #print(message.type)
-        #print(self.match_list(message.text))
-
         keyword = self.match_list(message.text)
     
-        if message.type in [MsgType.Unsupported, MsgType.Text] and keyword != "&&":
-            #self.keyword_reply(message)
+        if message.type in [MsgType.Unsupported, MsgType.Text] and keyword != "&&" and not self.sent_by_master(message):
             threading.Thread(target=self.keyword_reply, args=(message,keyword), name=f"keyword_reply thread {message.uid}").start()
             
         return message
@@ -71,7 +69,6 @@ class KeywordReplyMiddleware(Middleware):
             chat=message.chat,
             text=self.keywords[keyword],
             author=message.author,
-            #deliver_to=coordinator.slaves,
             deliver_to=coordinator.slaves[message.chat.module_id]
         )
         msg_to_master = Message(
@@ -82,8 +79,6 @@ class KeywordReplyMiddleware(Middleware):
             author=message.author,
             deliver_to=coordinator.master
         )
-        #msg.chat.uid=message.chat.uid
-        #coordinator.slaves['honus.CuteCatiHttp'].send_message(msg)
         coordinator.send_message(msg)
         coordinator.send_message(msg_to_master)
     
