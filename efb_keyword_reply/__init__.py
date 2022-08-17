@@ -1,6 +1,7 @@
 import threading
 import time
 import yaml
+import re
 from typing import Optional, Union, Dict
 from typing import Dict , Any
 
@@ -50,7 +51,7 @@ class KeywordReplyMiddleware(Middleware):
         关键字的匹配，主要匹配keywords的列表
         """
         for i in self.keywords.keys():
-            if text.find(i) != -1:
+            if re.search(i, text):
                 return i
         return "&&"
 
