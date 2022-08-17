@@ -1,22 +1,14 @@
-import pathlib
-import shelve
-import atexit
-import uuid
-import time
 import threading
-#import re
-from collections.abc import Mapping
-from threading import Timer
+import time
+import yaml
 from typing import Optional, Union, Dict
-from typing_extensions import overload, Literal
-
-from ruamel.yaml import YAML
+from typing import Dict , Any
 
 from ehforwarderbot import Middleware, Message, Status, coordinator, utils, MsgType
-from ehforwarderbot.chat import Chat, SystemChat, GroupChat
 from ehforwarderbot.types import ModuleID, MessageID, InstanceID, ChatID
+from ehforwarderbot.chat import Chat, SystemChat, GroupChat
 from ehforwarderbot.message import MsgType, MessageCommands, MessageCommand, Substitutions
-from ehforwarderbot.status import MessageRemoval, ReactToMessage, MessageReactionsUpdate
+from ehforwarderbot import utils as efb_utils
 
 
 class KeywordReplyMiddleware(Middleware):
@@ -26,14 +18,29 @@ class KeywordReplyMiddleware(Middleware):
     middleware_name: str = "Keyword Reply Middleware"
     __version__: str = '0.1.0'
 
-    keywords = {'语音/视频聊天\n  - - - - - - - - - - - - - - - \n不支持的消息类型, 请在微信端查看':'终端不支持语音通话，请发送信息或拨打*****(本条是自动回复）', '在吗？':'信息已收到，请留言（本条是自动回复）', '在？':'信息已收到，请留言（本条是自动回复）',  '在吗':'信息已收到，请留言（本条是自动回复）'}
+    #keywords = {'语音/视频聊天\n  - - - - - - - - - - - - - - - \n不支持的消息类型, 请在微信端查看':'终端不支持语音通话，请发送信息或拨打*****(本条是自动回复）', '在吗？':'信息已收到，请留言（本条是自动回复）', '在？':'信息已收到，请留言（本条是自动回复）',  '在吗':'信息已收到，请留言（本条是自动回复）'}
     
     #待处理，通过正则匹配
     #rekeywords = [ '*(unsupported)\n语音/视频聊天*']
 
     def __init__(self, instance_id: Optional[InstanceID] = None):
         super().__init__(instance_id)
-        
+        config_path = efb_utils.get_config_path(self.middleware_id)
+        self.config = self.load_config(config_path)
+        self.keywords=self.config['keywords'] if 'keywords' in self.config.keys() else {}
+        self.keywords['语音/视频聊天\n  - - - - - - - - - - - - - - - \n不支持的消息类型, 请在微信端查看']='终端不支持语音通话，请发送信息或拨打*****(本条是自动回复）'
+
+
+    def load_config(self, path : str) -> Dict[str, Any]:
+        if not path.exists():
+            return
+        with path.open() as f:
+            d = yaml.full_load(f)
+            if not d:
+                return
+            config: Dict[str, Any] = d
+        return config
+
     def match_list(self, text) -> str:
         """
         关键字的匹配，主要匹配keywords的列表
