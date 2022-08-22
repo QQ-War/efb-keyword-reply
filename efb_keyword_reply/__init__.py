@@ -13,23 +13,25 @@ from ehforwarderbot import utils as efb_utils
 
 
 class KeywordReplyMiddleware(Middleware):
-    """
-    """
+
     middleware_id: ModuleID = ModuleID("QQ_War.keyword_reply")
     middleware_name: str = "Keyword Reply Middleware"
     __version__: str = '0.1.0'
 
-    #keywords = {'语音/视频聊天\n  - - - - - - - - - - - - - - - \n不支持的消息类型, 请在微信端查看':'终端不支持语音通话，请发送信息或拨打*****(本条是自动回复）', '在吗？':'信息已收到，请留言（本条是自动回复）', '在？':'信息已收到，请留言（本条是自动回复）',  '在吗':'信息已收到，请留言（本条是自动回复）'}
-    
-    #待处理，通过正则匹配
-    #rekeywords = [ '*(unsupported)\n语音/视频聊天*']
 
     def __init__(self, instance_id: Optional[InstanceID] = None):
         super().__init__(instance_id)
         config_path = efb_utils.get_config_path(self.middleware_id)
         self.config = self.load_config(config_path)
-        self.keywords=self.config['keywords'] if 'keywords' in self.config.keys() else {}
-        #self.keywords['语音/视频聊天\n  - - - - - - - - - - - - - - - \n不支持的消息类型, 请在微信端查看']='终端不支持语音通话，请发送信息或拨打*****(本条是自动回复）'
+        self.keywords = self.config['keywords'] if 'keywords' in self.config.keys() else {}
+        self.replylist = dict()
+        '''
+        { chat_uid1: 
+            { keyword1: time1, keyword2: time2,}
+          chat_uid2:
+            { keyword1: time1, keyword2: time2,}
+        }
+        '''
 
     @staticmethod
     def load_config(path : str) -> Dict[str, Any]:
@@ -59,9 +61,25 @@ class KeywordReplyMiddleware(Middleware):
         keyword = self.match_list(message.text)
     
         if message.type in [MsgType.Unsupported, MsgType.Text] and keyword != "&&" and not self.sent_by_master(message):
-            threading.Thread(target=self.keyword_reply, args=(message,keyword), name=f"keyword_reply thread {message.uid}").start()
+            threading.Thread(target=self.keyword_replylist, args=(message,keyword), name=f"keyword_reply thread {message.uid}").start()
             
         return message
+
+    def keyword_replylist(self, message: Message, keyword: str):
+        chat_uid = message.chat.uid
+        currenttime = time.time()
+        if chat_uid in self.replylist.keys():
+            if keyword in self.replylist[chat_uid]:
+                if currenttime - self.replylist[chat_uid][keyword] > 60:
+                    self.keyword_reply(message, keyword)
+                self.replylist[chat_uid][keyword] = currenttime
+            else:
+                self.replylist[chat_uid][keyword] = currenttime
+                self.keyword_reply(message, keyword)
+        else:
+            self.replylist[chat_uid] = { keyword: currenttime }
+            self.keyword_reply(message, keyword)
+
 
     def keyword_reply(self, message: Message, keyword: str):
         msg = Message(
