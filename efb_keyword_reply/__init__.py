@@ -72,7 +72,7 @@ class KeywordReplyMiddleware(Middleware):
             if keyword in self.replylist[chat_uid]:
                 if currenttime - self.replylist[chat_uid][keyword] > 60:
                     self.keyword_reply(message, keyword)
-                self.replylist[chat_uid][keyword] = currenttime
+                    self.replylist[chat_uid][keyword] = currenttime
             else:
                 self.replylist[chat_uid][keyword] = currenttime
                 self.keyword_reply(message, keyword)
