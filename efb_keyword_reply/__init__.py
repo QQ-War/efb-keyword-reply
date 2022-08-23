@@ -90,7 +90,8 @@ class KeywordReplyMiddleware(Middleware):
             #author=message.author,
             deliver_to=coordinator.slaves[message.chat.module_id]
         )
-        msg.author = msg.chat.self
+        #msg.author = msg.chat.self
+        msg.author = msg.chat.make_system_member(name = "keywordreply", uid = ChatID(self.middleware_id))
         msg_to_master = Message(
             uid="{uni_id}".format(uni_id=str(int(time.time()))),
             type=MsgType.Text,
@@ -100,6 +101,7 @@ class KeywordReplyMiddleware(Middleware):
             deliver_to=coordinator.master
         )
         msg_to_master.author =  msg_to_master.chat.make_system_member(name = "keywordreply", uid = ChatID(self.middleware_id))
-        coordinator.send_message(msg)
         coordinator.send_message(msg_to_master)
+        coordinator.send_message(msg)
+        #coordinator.send_message(msg_to_master)
     
