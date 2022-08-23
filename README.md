@@ -1,4 +1,7 @@
 # KeywordReplyMiddleware
+根据配置文件里面的关键词进行回复。关键词和回复词作为一一对应关系，放到配置文件里面。
+会同时给主频道和从频道分别发送一条信息，以keyword系统用户作为发信人。
+
 1.安装
 
 ```pip install git+https://github.com/QQ-War/efb-keyword-reply.git```
