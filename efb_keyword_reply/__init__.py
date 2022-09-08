@@ -24,6 +24,7 @@ class KeywordReplyMiddleware(Middleware):
         config_path = efb_utils.get_config_path(self.middleware_id)
         self.config = self.load_config(config_path)
         self.keywords = self.config['keywords'] if 'keywords' in self.config.keys() else {}
+        self.keywordsrepeattime = self.config['keywordsrepeattime'] if 'keywordsrepeattime' in self.config.keys() else 1
         self.replylist = dict()
         '''
         { chat_uid1: 
@@ -70,7 +71,7 @@ class KeywordReplyMiddleware(Middleware):
         currenttime = time.time()
         if chat_uid in self.replylist.keys():
             if keyword in self.replylist[chat_uid]:
-                if currenttime - self.replylist[chat_uid][keyword] > 60:
+                if currenttime - self.replylist[chat_uid][keyword] > 60*int(self.keywordsrepeattime):
                     self.keyword_reply(message, keyword)
                     self.replylist[chat_uid][keyword] = currenttime
             else:

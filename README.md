@@ -24,4 +24,6 @@ keywords:
   关键字1: 回复词1
   关键字2: 回复词2
   ...
+keywordsrepeattime: 5
+#单位分钟，不设置默认为1分钟
 ```
