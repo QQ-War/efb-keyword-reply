@@ -102,6 +102,7 @@ class KeywordReplyMiddleware(Middleware):
             deliver_to=coordinator.master
         )
         msg_to_master.author =  msg_to_master.chat.make_system_member(name = "keywordreply", uid = ChatID(self.middleware_id))
+        time.sleep(3)
         coordinator.send_message(msg_to_master)
         coordinator.send_message(msg)
         #coordinator.send_message(msg_to_master)
