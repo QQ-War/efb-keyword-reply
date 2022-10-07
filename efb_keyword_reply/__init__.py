@@ -54,7 +54,7 @@ class KeywordReplyMiddleware(Middleware):
         关键字的匹配，主要匹配keywords的列表
         """
         for i in self.keywords.keys():
-            if re.search(i, text):
+            if re.search(i, str(text)):
                 return i
         return "&&"
 
