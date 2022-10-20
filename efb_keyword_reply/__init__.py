@@ -24,6 +24,7 @@ class KeywordReplyMiddleware(Middleware):
         config_path = efb_utils.get_config_path(self.middleware_id)
         self.config = self.load_config(config_path)
         self.keywords = self.config['keywords'] if 'keywords' in self.config.keys() else {}
+        self.keywords_block = self.config['keywords_block'] if 'keywords_block' in self.config.keys() else []
         self.keywordsrepeattime = self.config['keywordsrepeattime'] if 'keywordsrepeattime' in self.config.keys() else 1
         self.replylist = dict()
         '''
@@ -58,11 +59,24 @@ class KeywordReplyMiddleware(Middleware):
                 return i
         return "&&"
 
+    def match_list_block(self, text) -> str:
+        """
+        关键字的匹配，主要匹配keywords的列表
+        """
+        for i in self.keywords_block:
+            if re.search(i, str(text)):
+                return i
+        return "&&"
+
     def process_message(self, message: Message) -> Optional[Message]:
         keyword = self.match_list(message.text)
+        keyword_block = self.match_list_block(message.text)
     
         if message.type in [MsgType.Unsupported, MsgType.Text] and keyword != "&&" and not self.sent_by_master(message):
             threading.Thread(target=self.keyword_replylist, args=(message,keyword), name=f"keyword_reply thread {message.uid}").start()
+
+        if message.type in [MsgType.Unsupported, MsgType.Text] and keyword_block != "&&" and not self.sent_by_master(message):
+            return None
             
         return message
 
