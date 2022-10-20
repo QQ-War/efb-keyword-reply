@@ -28,7 +28,7 @@ keywords:
 keywordsrepeattime: 5
 #单位分钟，不设置默认为1分钟
 keywords_block:
-  屏蔽关键词1
-  屏蔽关键词2
+  - 屏蔽关键词1
+  - 屏蔽关键词2
   ...
 ```
