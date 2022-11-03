@@ -92,11 +92,12 @@ class KeywordReplyMiddleware(Middleware):
                 self.replylist[chat_uid][keyword] = currenttime
                 self.keyword_reply(message, keyword)
         else:
-            self.replylist[chat_uid] = { keyword: currenttime }
+            self.replylist[chat_uid] = {keyword: currenttime}
             self.keyword_reply(message, keyword)
 
 
     def keyword_reply(self, message: Message, keyword: str):
+        print(self.keywords[keyword])
         msg = Message(
             uid="{uni_id}".format(uni_id=str(int(time.time()))),
             type=MsgType.Text,
